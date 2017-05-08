@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using ContosoU2016.Data;
 using ContosoU2016.Models;
 using ContosoU2016.Helper;
+using ContosoU2016.Models.SchoolViewModels;
 
 namespace ContosoU2016.Controllers
 {
@@ -298,7 +299,7 @@ namespace ContosoU2016.Controllers
             var student = await _context.Students.AsNoTracking().SingleOrDefaultAsync(m => m.ID == id);
 
             //dcowan: check if student exists
-            if(student == null)
+            if (student == null)
             {
                 return RedirectToAction("Index");
             }
@@ -313,9 +314,25 @@ namespace ContosoU2016.Controllers
             {
                 //Return user to the Delete GET Method passing it the current student (ID)
                 //and a flag argument set to TRUE representing an error saving record
-                return RedirectToAction("Delete",new {id=id, saveChangesError=true });
-                
+                return RedirectToAction("Delete", new { id = id, saveChangesError = true });
+
             }
+        }
+
+        //dcowan:
+        //GET Student/Stats
+        public async Task<IActionResult> Stats()
+        {
+            //Populate the EnrollmentDateGroup ViewModel with Student Statistics
+            IQueryable<EnrollmentDateGroup> data =
+                from student in _context.Students //FROM Students
+                group student by student.EnrollmentDate into dateGroup //GROUP by EnrollmentDate
+                select new EnrollmentDateGroup //SELECT Enrollment COUNT(*) as StudentCount
+                {
+                    EnrollmentDate = dateGroup.Key,
+                    StudentCount = dateGroup.Count()
+                };
+            return View(await data.AsTracking().ToListAsync()); //AsNoTracking is not necessary
         }
 
         private bool StudentExists(int id)
