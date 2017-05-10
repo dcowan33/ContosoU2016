@@ -57,12 +57,38 @@ namespace ContosoU2016
             // Add application services.
             services.AddTransient<IEmailSender, AuthMessageSender>();
             services.AddTransient<ISmsSender, AuthMessageSender>();
+
+            /*
+             * ASP.NET Services can be configured with the following lifetimes:
+             * ===============
+             * == Transient ==
+             * ===============
+             * Transient lifetime services are created each time they are requested.
+             * This lifetime works best for lightweight, stateless services
+             * 
+             * ===============
+             * ==== Scoped ===
+             * ===============
+             * Scoped lifetime services are created once per request
+             * 
+             * ===============
+             * == Singleton ==
+             * ===============
+             * Singleton lifetime services are created the first time they are requested
+             * (or when ConfigureServices is run if you specify the instance there) and
+             * then every subsequent request will use the same instance
+             * 
+             */
+
+            //dcowan:  Service for Seeding admin user and roles
+            services.AddTransient<AdministratorSeedData>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, 
+        public async void Configure(IApplicationBuilder app, IHostingEnvironment env, 
             ILoggerFactory loggerFactory,
-            SchoolContext context)/*dcowan add SchoolContext Middleware to the pipeline*/
+            SchoolContext context, /*dcowan add SchoolContext Middleware to the pipeline*/
+            AdministratorSeedData seeder)/*dcowan add AdministratorSeed Middleware to pipeline */
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
@@ -101,6 +127,9 @@ namespace ContosoU2016
              * Later we will modify theh database when the data model changes, without deleting and 
              * re-creating
              */
+
+            //Seed the Administrator and roles
+            await seeder.EnsureSeedData();
         }
     }
 }
